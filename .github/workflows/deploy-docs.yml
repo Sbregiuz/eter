@@ -21,13 +21,29 @@ jobs:
           curl -sL https://sh.rustup.rs | sh -s -- -y
           source $HOME/.cargo/env
 
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y doxygen
+
       - name: Install mdBook
         run: cargo install mdbook
+
+      - name: Configure CMake
+        run: cmake -S . -B build
+
+      - name: Build Doxygen docs
+        run: cmake --build build --target doc-doxygen
 
       - name: Build with mdBook
         run: |
           cd docs
           mdbook build
+
+      - name: Copy Doxygen output to MDbook site
+        run: |
+          mkdir -p docs/book/api
+          cp -r build/doxygen/html/* docs/book/api/
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
