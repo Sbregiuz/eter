@@ -16,12 +16,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-        
+      - name: Install Cargo
+        run: |
+          curl -sL https://sh.rustup.rs | sh -s -- -y
+          source $HOME/.cargo/env
 
       - name: Install mdBook
         run: cargo install mdbook
@@ -31,6 +29,7 @@ jobs:
           cd docs
           mdbook build
 
+      - name: Setup Pages
         uses: actions/configure-pages@v4
 
       - name: Upload artifact
