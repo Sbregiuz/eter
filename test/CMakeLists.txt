@@ -30,16 +30,16 @@ message(STATUS "LLVM_TOOL_BIN_DIR=${LLVM_TOOL_BIN_DIR}")
 message(STATUS "CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}")
 
 find_program(ETER_LIT_EXECUTABLE
-  NAMES llvm-lit lit
+  NAMES llvm-lit llvm-lit-22 lit
   HINTS ${LLVM_TOOL_BIN_DIR}
-  PATHS ${LLVM_TOOL_BIN_DIR}
+  PATHS ${LLVM_TOOL_BIN_DIR} ENV PATH
   DOC "Path to the lit test runner"
 )
 
 find_program(FILECHECK_EXECUTABLE
-  NAMES FileCheck filecheck
+  NAMES FileCheck FileCheck-22 filecheck filecheck-22 llvm-FileCheck llvm-filecheck
   HINTS ${LLVM_TOOL_BIN_DIR}
-  PATHS ${LLVM_TOOL_BIN_DIR}
+  PATHS ${LLVM_TOOL_BIN_DIR} ENV PATH
   DOC "Path to the FileCheck utility"
 )
 
