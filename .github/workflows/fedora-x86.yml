@@ -28,6 +28,7 @@ jobs:
         run: |
           dnf install -y --setopt=install_weak_deps=False \
             ca-certificates cmake ninja-build gcc gcc-c++ \
+            llvm \
             curl libxml2-devel \
             python3 python3-pip python3-setuptools \
             xz diffutils zlib-devel ncurses-libs libffi-devel
@@ -41,7 +42,7 @@ jobs:
           fi
           tar xf "LLVM-${LLVM_VERSION}-Linux-X64.tar.xz"
           mv "LLVM-${LLVM_VERSION}-Linux-X64" "${LLVM_PREFIX}"
-          ls -la "${LLVM_PREFIX}/bin" | grep -i filecheck || true
+          ls -la "${LLVM_PREFIX}/bin" | grep -i -E 'filecheck|FileCheck|llvm-filecheck|llvm-FileCheck' || true
           pip3 install lit --break-system-packages
       - name: Build eter
         env:
