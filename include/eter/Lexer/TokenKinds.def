@@ -55,10 +55,11 @@
 //===----------------------------------------------------------------------===//
 // Special Tokens
 //===----------------------------------------------------------------------===//
-ETER_TOKEN(unknown)     ///< Fallback for error recovery
-ETER_TOKEN(eof)         ///< End of file
-ETER_TOKEN(doc_comment) ///< Documentation comment
-ETER_TOKEN(comment)     ///< Regular comment
+ETER_TOKEN(unknown)          ///< Fallback for error recovery
+ETER_TOKEN(eof)              ///< End of file
+ETER_TOKEN(doc_comment)      ///< Documentation comment
+ETER_TOKEN(file_doc_comment) ///< File-level documentation comment
+ETER_TOKEN(comment)          ///< Regular comment
 
 //===----------------------------------------------------------------------===//
 // Identifiers and Literals

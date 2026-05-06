@@ -418,6 +418,16 @@ TEST(LexerTest, LexDocComment) {
   EXPECT_EQ(getToken(Items[1]).TokenKind, Token::Kind::eof);
 }
 
+TEST(LexerTest, LexFileDocComment) {
+  Lexer L;
+  auto Buffer = createTestBuffer("//! file doc comment");
+  auto Items = L.lex(Buffer);
+
+  ASSERT_EQ(Items.size(), 2);
+  EXPECT_EQ(getToken(Items[0]).TokenKind, Token::Kind::file_doc_comment);
+  EXPECT_EQ(getToken(Items[1]).TokenKind, Token::Kind::eof);
+}
+
 //============================================================================//
 // Test: Whitespace Handling
 //============================================================================//

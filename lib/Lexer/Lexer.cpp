@@ -104,6 +104,12 @@ std::vector<LexerItem> Lexer::lex(SourceBuffer &SourceBuffer, Span Span) {
   LexerItems.reserve((Span.End - Span.Start) / 8 + 1);
 
   // Initialize the sliding window pointers for this lexing session.
+  // - BufferStart: Points to the absolute beginning of the underlying source string.
+  //                Used as a stable base to calculate relative offsets for Token Spans.
+  // - CurPtr:      The active scanning pointer that advances character by character.
+  //                Initialized to the start of the requested sub-span.
+  // - BufferEnd:   The fixed upper bound for this lexing operation. The lexer will
+  //                stop processing once CurPtr reaches this boundary.
   const char *BufferStart = Buffer.data();
   const char *CurPtr = BufferStart + Span.Start;
   const char *BufferEnd = BufferStart + Span.End;
@@ -730,6 +736,12 @@ bool Lexer::lexComment(Token &Result, const char *TokStart, const char *&CurPtr,
       CurPtr++;
     }
 
+    bool IsFileDocComment = false;
+    if (SlashCount == 2 && CurPtr < BufferEnd && *CurPtr == '!') {
+      IsFileDocComment = true;
+      CurPtr++; // consume '!'
+    }
+
     // Read the rest of the line
     while (CurPtr < BufferEnd && *CurPtr != '\n' && *CurPtr != '\r') {
       CurPtr++;
@@ -738,6 +750,8 @@ bool Lexer::lexComment(Token &Result, const char *TokStart, const char *&CurPtr,
     // A doc comment is exactly 3 slashes.
     if (SlashCount == 3) {
       Result.TokenKind = Token::Kind::doc_comment;
+    } else if (IsFileDocComment) {
+      Result.TokenKind = Token::Kind::file_doc_comment;
     } else {
       Result.TokenKind = Token::Kind::comment;
     }
