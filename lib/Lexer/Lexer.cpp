@@ -397,6 +397,16 @@ std::vector<LexerItem> Lexer::lex(SourceBuffer &SourceBuffer, Span Span) {
       Kind = Token::Kind::dot;
       break;
 
+    //===----------------------------------------------------------------------===//
+    // Attribute / Error Propagation
+    //===----------------------------------------------------------------------===//
+    case '@':
+      Kind = Token::Kind::at;
+      break;
+    case '?':
+      Kind = Token::Kind::question;
+      break;
+
     default:
       break;
     }

@@ -57,10 +57,18 @@ if [[ ${#cpp_files[@]} -gt 0 ]]; then
   fi
 
   echo "[eter] Checking clang-format..."
-  clang-format --dry-run --Werror "${cpp_files[@]}"
+  # Use git clang-format (checks only changed lines, LLVM convention).
+  # Actual diff output contains lines starting with '+' or '-'; the
+  # "did not modify any files" message does not — use that to distinguish.
+  format_diff=$(git clang-format --diff HEAD 2>&1)
+  if echo "$format_diff" | grep -q "^[-+]"; then
+    echo "[eter] clang-format found issues. Run: git clang-format HEAD" >&2
+    echo "$format_diff" >&2
+    exit 1
+  fi
 fi
 
-if [[ ${#cpp_files[@]} -gt 0 ]]; then
+if [[ ${#source_files[@]} -gt 0 ]]; then
   if ! command -v clang-tidy >/dev/null 2>&1; then
     echo "[eter] error: clang-tidy is required for lint checks." >&2
     exit 1
@@ -73,7 +81,7 @@ if [[ ${#cpp_files[@]} -gt 0 ]]; then
   fi
 
   echo "[eter] Checking clang-tidy..."
-  if ! clang-tidy -p build --warnings-as-errors='*' "${cpp_files[@]}"; then
+  if ! clang-tidy "${source_files[@]}" -p build --header-filter='.*' --warnings-as-errors='*'; then
     echo "[eter] clang-tidy checks failed." >&2
     exit 1
   fi
