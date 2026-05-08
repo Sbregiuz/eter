@@ -24,7 +24,7 @@ echo "[eter] Building project..."
 cmake --build build
 
 echo "[eter] Running test suite..."
-cmake --build build --target check-eter
+cmake --build build --target check-all
 
 echo "[eter] Running the docs build..."
 cmake --build build --target doc-doxygen
