@@ -155,8 +155,6 @@ int Driver::parseFile(const std::string &Path, PackSession &Session,
   lexer::Lexer L;
   // Lex errors must be captured before TokenStream is moved into parse().
   parser::TokenStream TS(L.lex(*ExpectedBuf), ExpectedBuf->getBuffer());
-  const std::vector<lexer::LexerError> LexErrs(TS.lexErrors().begin(),
-                                               TS.lexErrors().end());
 
   // Parse.
   parser::ParseResult Result =
@@ -165,7 +163,7 @@ int Driver::parseFile(const std::string &Path, PackSession &Session,
   // Emit diagnostics.
   DiagnosticEngine DE =
       std::move(SDE).withSourceManager(SourceManager(*ExpectedBuf));
-  for (const auto &LErr : LexErrs)
+  for (const auto &LErr : TS.lexErrors())
     DE.error(LErr.ErrorSpan)
         .message(lexer::LexerError::getErrorString(LErr.ErrorKind))
         .emit();
