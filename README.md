@@ -130,15 +130,9 @@ Built on the LLVM and MLIR infrastructure, Eter leverages industry-leading optim
 
 ## Getting the Source Code and Building Eter
 
-Consult the [Getting Started with Eter](./GETTING_STARTED.md) page for information on building and running Eter.
-Eter currently expects **LLVM/MLIR 22.x** and a **C++17-capable** compiler toolchain.
-
-
-For information on how to contribute to the Eter project, please take a look at the [Contributing to Eter](./CONTRIBUTING.md) guide.
-
-Contributors may also want to enable the repository Git hooks described in [Contributing to Eter](./CONTRIBUTING.md) for local formatting, linting, and pre-push validation.
-
-For IDE/LSP setup tips, including the recommended root `.clangd` file, see [Getting Started with Eter](./GETTING_STARTED.md).
+See [GETTING_STARTED.md](./GETTING_STARTED.md) for build instructions and a
+quick-start guide. For the full contributor workflow, see
+[CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## License
 

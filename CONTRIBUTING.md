@@ -182,7 +182,7 @@ hardcoded fallback).
 Run `./x help` for the full reference.
 
 The `x` script respects the `LLVM_PREFIX_PATH` environment variable if you
-need to point it at a non-default LLVM installation:
+need to point it at a **non-default** LLVM installation:
 
 ```bash
 LLVM_PREFIX_PATH=/usr/lib/llvm-22 ./x config
