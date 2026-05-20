@@ -31,50 +31,35 @@ if ! output=$(git --no-pager diff --cached --check 2>&1); then
   exit 1
 fi
 
-cpp_files=()
-source_files=()
-
+has_cpp=false
+has_source=false
 for file in "${staged_files[@]}"; do
   [[ -f "$file" ]] || continue
-
   case "$file" in
-    *.c|*.cc|*.cpp|*.cxx|*.h|*.hh|*.hpp|*.hxx)
-      cpp_files+=("$file")
-      ;;
+    *.c|*.cc|*.cpp|*.cxx|*.h|*.hh|*.hpp|*.hxx) has_cpp=true ;;
   esac
-
   case "$file" in
-    *.c|*.cc|*.cpp|*.cxx)
-      source_files+=("$file")
-      ;;
+    *.c|*.cc|*.cpp|*.cxx) has_source=true ;;
   esac
 done
 
-if [[ ${#cpp_files[@]} -gt 0 ]]; then
-  if ! command -v clang-format >/dev/null 2>&1; then
-    echo "[eter] error: clang-format is required for C/C++ formatting checks." >&2
+if $has_cpp; then
+  echo "[eter] Checking clang-format..."
+  if ! ./x check-clang-format HEAD; then
+    echo "[eter] Run: ./x clang-format HEAD  to fix formatting." >&2
     exit 1
   fi
-
-  echo "[eter] Checking clang-format..."
-  clang-format --dry-run --Werror "${cpp_files[@]}"
 fi
 
-if [[ ${#cpp_files[@]} -gt 0 ]]; then
-  if ! command -v clang-tidy >/dev/null 2>&1; then
-    echo "[eter] error: clang-tidy is required for lint checks." >&2
-    exit 1
-  fi
-
+if $has_source; then
   if [[ ! -f build/compile_commands.json ]]; then
     echo "[eter] error: build/compile_commands.json was not found." >&2
-    echo "[eter] Run: cmake -S . -B build -G Ninja" >&2
+    echo "[eter] Run: ./x config" >&2
     exit 1
   fi
 
   echo "[eter] Checking clang-tidy..."
-  if ! clang-tidy -p build --warnings-as-errors='*' "${cpp_files[@]}"; then
-    echo "[eter] clang-tidy checks failed." >&2
+  if ! ./x clang-tidy HEAD; then
     exit 1
   fi
 fi

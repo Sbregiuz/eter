@@ -6,29 +6,34 @@
 #
 #===----------------------------------------------------------------------===#
 
-add_library(EterDriver
-  Driver.cpp
-  Version.cpp
+add_library(EterParser
+    Parser.cpp
+    ParseDecl.cpp
+    ParseStmt.cpp
+    ParseExpr.cpp
+    ParseType.cpp
+    ParsePat.cpp
+    NodePool.cpp
+    TokenStream.cpp
 )
 
-add_library(eter::Driver ALIAS EterDriver)
+add_library(eter::Parser ALIAS EterParser)
 
-target_link_libraries(EterDriver
+target_link_libraries(EterParser
   PUBLIC
     EterProjectOptions
+    EterBase
+    EterLexer
     LLVM
-    eter::Base
-    eter::Lexer
-    eter::Parser
 )
 
-target_include_directories(EterDriver
+target_include_directories(EterParser
   PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-target_include_directories(EterDriver SYSTEM
+target_include_directories(EterParser SYSTEM
   PRIVATE
     ${LLVM_INCLUDE_DIRS}
 )

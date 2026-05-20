@@ -8,9 +8,10 @@ Checks: >
   readability-identifier-naming,
   -misc-non-private-member-variables-in-classes,
   -misc-include-cleaner,
-  -misc-const-correctness
+  -misc-no-recursion,
+  -misc-use-anonymous-namespace
 
-# -misc-no-recursion,
+# -misc-const-correctness,
 # -misc-unused-parameters,
 # -misc-use-anonymous-namespace,
 
