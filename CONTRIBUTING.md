@@ -156,9 +156,10 @@ cd eter
 ## The `x` Script
 
 The repository includes an `x` script at the root that wraps the most common
-CMake and tooling commands. It handles LLVM path setup automatically
-(`LLVM_PREFIX_PATH`, `PATH`, etc.) so you do not need to repeat those flags
-each time.
+CMake and tooling commands. It derives everything — `PATH`, compiler paths,
+and CMake config directories — from a single `LLVM_PREFIX_PATH` variable,
+which it auto-discovers if not set (via `llvm-config`, then `brew`, then a
+hardcoded fallback).
 
 | Task | `x` command |
 |---|---|

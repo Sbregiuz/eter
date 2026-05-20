@@ -4,15 +4,36 @@ set -euo pipefail
 unset LDFLAGS
 unset CPPFLAGS
 
-LLVM_PREFIX_PATH=${LLVM_PREFIX_PATH:-/opt/homebrew/opt/llvm@22}
+# Discover LLVM_PREFIX_PATH if not explicitly set in the environment.
+# Priority: environment variable > llvm-config (already in PATH) > brew > hardcoded fallback.
+if [[ -z "${LLVM_PREFIX_PATH:-}" ]]; then
+    if command -v llvm-config >/dev/null 2>&1; then
+        LLVM_PREFIX_PATH=$(llvm-config --prefix)
+    elif command -v brew >/dev/null 2>&1 && brew --prefix llvm@22 >/dev/null 2>&1; then
+        LLVM_PREFIX_PATH=$(brew --prefix llvm@22)
+    else
+        LLVM_PREFIX_PATH=/opt/homebrew/opt/llvm@22
+    fi
+fi
+
+# CMake needs CMAKE_PREFIX_PATH to locate LLVM/MLIR package config files.
 CMAKE_PREFIX_PATH=${LLVM_PREFIX_PATH}
-export PATH="${LLVM_PREFIX_PATH}/bin:$PATH" # export to ensure subprocesses can use the same LLVM tools
+
+# Make LLVM tools (clang, clang-format, clang-tidy, FileCheck, lit, ...)
+# available to this script and all subprocesses it spawns.
+export PATH="${LLVM_PREFIX_PATH}/bin:$PATH"
+
+# Explicit paths to the LLVM and MLIR CMake config directories.
+# Passing these prevents CMake from picking up the wrong version when
+# multiple LLVM installations coexist. Both can be overridden by setting
+# them in the environment before calling x.
+LLVM_DIR=${LLVM_DIR:-${LLVM_PREFIX_PATH}/lib/cmake/llvm}
+MLIR_DIR=${MLIR_DIR:-${LLVM_PREFIX_PATH}/lib/cmake/mlir}
+
 LIT_COMMAND=lit
 BUILD_DIR=./build
 CLANG_FORMAT_COMMIT=HEAD
 CLANG_TIDY_COMMIT=HEAD
-# LLVM_DIR=${LLVM_DIR:-${LLVM_PREFIX_PATH}/lib/cmake/llvm}
-# MLIR_DIR=${MLIR_DIR:-${LLVM_PREFIX_PATH}/lib/cmake/mlir}
 
 print_usage() {
     echo "Usage: x <command> [arguments]"
@@ -39,7 +60,9 @@ print_usage() {
     echo "  show-config                          Show the current configuration and environment variables."
     echo ""
     echo "Environment:"
-    echo "  LLVM_PREFIX_PATH     Path to LLVM installation directory (default: /opt/homebrew/opt/llvm@22)"
+    echo "  LLVM_PREFIX_PATH     Path to LLVM installation (auto-discovered if unset)"
+    echo "  LLVM_DIR             Path to LLVM CMake config dir (derived from LLVM_PREFIX_PATH if unset)"
+    echo "  MLIR_DIR             Path to MLIR CMake config dir (derived from LLVM_PREFIX_PATH if unset)"
     echo "  LIT_COMMAND          Command to run lit tests (default: lit)"
     echo "  BUILD_DIR            Directory for CMake build files (default: ./build)"
     echo ""
@@ -77,7 +100,9 @@ case $COMMAND in
             -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH} \
             -DCMAKE_C_COMPILER=${LLVM_PREFIX_PATH}/bin/clang \
             -DCMAKE_CXX_COMPILER=${LLVM_PREFIX_PATH}/bin/clang++ \
-            -DLLVM_ENABLE_ASSERTIONS=ON
+            -DLLVM_ENABLE_ASSERTIONS=ON \
+            -DLLVM_DIR=${LLVM_DIR} \
+            -DMLIR_DIR=${MLIR_DIR}
         ;;
 
     build)
@@ -194,6 +219,8 @@ EOL
         echo "[x] LDFLAGS: ${LDFLAGS:-<not set>}"
         echo "[x] CPPFLAGS: ${CPPFLAGS:-<not set>}"
         echo "[x] LLVM_PREFIX_PATH: ${LLVM_PREFIX_PATH}"
+        echo "[x] LLVM_DIR: ${LLVM_DIR}"
+        echo "[x] MLIR_DIR: ${MLIR_DIR}"
         echo "[x] LIT_COMMAND: ${LIT_COMMAND}"
         echo "[x] BUILD_DIR: ${BUILD_DIR}"
         echo "[x] CLANG_FORMAT_COMMIT: ${CLANG_FORMAT_COMMIT}"
