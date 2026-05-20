@@ -11,8 +11,6 @@
 
 #include <llvm/Support/raw_ostream.h>
 
-#include <cstring>
-
 #define DEBUG_TYPE "base-intern"
 
 namespace eter::parser {
@@ -24,18 +22,16 @@ StringInterner::StringInterner() {
 }
 
 InternedStr StringInterner::intern(llvm::StringRef S) {
-  auto It = Table.find(S);
-  if (It != Table.end())
+  auto [It, Inserted] = Table.insert({S, 0});
+  if (!Inserted)
     return It->second;
 
-  // Copy the string into the arena so the StringRef remains valid.
-  char *Buf = static_cast<char *>(Storage.Allocate(S.size(), 1));
-  std::memcpy(Buf, S.data(), S.size());
-  llvm::StringRef Owned(Buf, S.size());
-
+  // StringMap copies S into StringMapEntry's inline storage on insert.
+  // It->first() is a stable StringRef into that storage for the lifetime
+  // of Table.
   auto Id = static_cast<InternedStr>(Strings.size());
-  Strings.push_back(Owned);
-  Table[Owned] = Id;
+  It->second = Id;
+  Strings.push_back(It->first());
 
   ETER_DEBUG(llvm::dbgs() << "[" DEBUG_TYPE "] interned \"" << S << "\" → "
                           << Id << "\n");

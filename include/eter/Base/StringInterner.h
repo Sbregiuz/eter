@@ -32,9 +32,11 @@ inline constexpr InternedStr NullStr = 0;
 /// A string interning table that assigns a stable `InternedStr` ID to each
 /// unique string it sees.
 ///
-/// All character data is owned by an internal `BumpPtrAllocator`. The
-/// `StringInterner` must outlive any code that calls `get()` to retrieve the
-/// raw `StringRef` text; the integer IDs themselves remain valid after
+/// All character data is owned by the `BumpPtrAllocator` embedded in `Table`:
+/// `StringMap` allocates each entry (including its inline key bytes) from that
+/// allocator, and `StringRef`s in `Strings` point into that storage.
+/// The `StringInterner` must outlive any code that calls `get()` to retrieve
+/// the raw `StringRef` text; the integer IDs themselves remain valid after
 /// destruction (just numbers), but dereferencing them is UB.
 ///
 /// ## Lifetime
@@ -64,9 +66,9 @@ public:
   [[nodiscard]] uint32_t size() const;
 
 private:
-  llvm::BumpPtrAllocator Storage;
-  llvm::StringMap<InternedStr> Table;   ///< content -> id
-  std::vector<llvm::StringRef> Strings; ///< id -> StringRef into Storage
+  llvm::StringMap<InternedStr, llvm::BumpPtrAllocator> Table; ///< content -> id
+  std::vector<llvm::StringRef>
+      Strings; ///< id -> StringRef into Table's bump storage
 };
 
 } // namespace eter::parser

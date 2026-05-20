@@ -16,7 +16,7 @@
 
 namespace eter::parser {
 
-NodeIndex Parser::parseExpr(int MinBP) {
+NodeIndex Parser::parseExpr([[maybe_unused]] int MinBP) {
   ETER_DEBUG(llvm::dbgs() << "[" DEBUG_TYPE "] parseExpr minBP=" << MinBP
                           << "\n");
   llvm::report_fatal_error("TODO: implement Parser::parseExpr");

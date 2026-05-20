@@ -20,6 +20,7 @@
 #include "eter/Parser/Parser.h"
 #include "eter/Parser/TokenStream.h"
 
+#include <llvm/ADT/ScopeExit.h>
 #include <llvm/ADT/StringRef.h>
 #include <llvm/Support/Error.h>
 #include <llvm/Support/VirtualFileSystem.h>
@@ -176,6 +177,7 @@ int Driver::parseFile(const std::string &Path, PackSession &Session,
   const std::filesystem::path Dir = std::filesystem::path(Path).parent_path();
 
   InProgress.insert(Path);
+  auto Cleanup = llvm::scope_exit([&] { InProgress.erase(Path); });
 
   for (auto Child : Pool.childrenOf(Result.Root)) {
     if (Pool.kindOf(Child) != parser::NodeKind::ModDeclFile)
@@ -196,18 +198,13 @@ int Driver::parseFile(const std::string &Path, PackSession &Session,
     else {
       llvm::errs() << "cannot find file for 'mod " << ModName << ";' (tried '"
                    << FileDotEt << "' and '" << ModDotEt << "')\n";
-      InProgress.erase(Path);
       return 1;
     }
 
     const int Rc = parseFile(ChildPath, Session, InProgress);
-    if (Rc != 0) {
-      InProgress.erase(Path);
+    if (Rc != 0)
       return Rc;
-    }
   }
-
-  InProgress.erase(Path);
 
   // Store the result only after all children are processed.
   Session.Results.insert({Path, std::move(Result)});

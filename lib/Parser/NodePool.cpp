@@ -42,7 +42,7 @@ NodeIndex NodePool::alloc(NodeKind Kind, Span S,
   auto ChildrenBegin = static_cast<uint32_t>(Children.size());
   Children.insert(Children.end(), ChildNodes.begin(), ChildNodes.end());
 
-  auto Idx = static_cast<NodeIndex>(Nodes.size());
+  NodeIndex Idx{static_cast<uint32_t>(Nodes.size())};
   Nodes.push_back(NodeData{Kind, static_cast<uint16_t>(ChildNodes.size()),
                            ChildrenBegin, Payload});
   Spans.push_back(S);
@@ -54,15 +54,21 @@ NodeIndex NodePool::allocLeaf(NodeKind Kind, Span S, uint32_t Payload) {
 }
 
 const NodeData &NodePool::operator[](NodeIndex I) const {
-  assert(I < Nodes.size() && "NodeIndex out of bounds");
-  return Nodes[I];
+  assert(I.Value < Nodes.size() && "NodeIndex out of bounds");
+  return Nodes[I.Value];
+}
+
+void NodePool::reserve(size_t NodeHint) {
+  Nodes.reserve(NodeHint + 1); // +1 for the sentinel at index 0
+  Spans.reserve(NodeHint + 1);
+  Children.reserve(NodeHint * 2); // rough heuristic: ~2 children per node
 }
 
 NodeKind NodePool::kindOf(NodeIndex I) const { return (*this)[I].Kind; }
 
 Span NodePool::spanOf(NodeIndex I) const {
-  assert(I < Spans.size() && "NodeIndex out of bounds");
-  return Spans[I];
+  assert(I.Value < Spans.size() && "NodeIndex out of bounds");
+  return Spans[I.Value];
 }
 
 llvm::ArrayRef<NodeIndex> NodePool::childrenOf(NodeIndex I) const {
@@ -78,6 +84,8 @@ NodeIndex NodePool::childAt(NodeIndex I, uint16_t N) const {
 }
 
 uint32_t NodePool::makePayload(InternedStr Name, Regime R) {
+  assert(Name <= 0x3FFFFFFFu &&
+         "StringInterner ID exceeded 30-bit payload capacity");
   return (static_cast<uint32_t>(R) << 30) | (Name & 0x3FFFFFFFu);
 }
 

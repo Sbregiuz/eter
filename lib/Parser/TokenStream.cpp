@@ -39,8 +39,8 @@ lexer::Token::Kind TokenStream::peek(uint32_t Offset) const {
 lexer::Token TokenStream::peekToken(uint32_t Offset) const {
   const uint32_t Idx = Cursor + Offset;
   if (Idx >= Tokens.size()) {
-    const Span End = Tokens.empty() ? Span{0, 0} : Tokens.back().TokenSpan;
-    return lexer::Token(lexer::Token::Kind::eof, End);
+    const uint32_t EndOff = Tokens.empty() ? 0 : Tokens.back().TokenSpan.End;
+    return lexer::Token(lexer::Token::Kind::eof, Span{EndOff, EndOff});
   }
   return Tokens[Idx];
 }
@@ -60,8 +60,8 @@ bool TokenStream::atEof() const { return check(lexer::Token::Kind::eof); }
 lexer::Token TokenStream::advance() {
   if (Cursor < Tokens.size())
     return Tokens[Cursor++];
-  const Span End = Tokens.empty() ? Span{0, 0} : Tokens.back().TokenSpan;
-  return lexer::Token(lexer::Token::Kind::eof, End);
+  const uint32_t EndOff = Tokens.empty() ? 0 : Tokens.back().TokenSpan.End;
+  return lexer::Token(lexer::Token::Kind::eof, Span{EndOff, EndOff});
 }
 
 bool TokenStream::consume(lexer::Token::Kind K) {

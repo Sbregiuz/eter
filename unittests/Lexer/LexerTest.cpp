@@ -440,7 +440,7 @@ TEST(LexerTest, LexWithWhitespace) {
 
 TEST(LexerTest, LexInvalidCharacter) {
   Lexer L;
-  auto Buffer = createTestBuffer("@");
+  auto Buffer = createTestBuffer("~");
   auto Items = L.lex(Buffer);
 
   // Should have an error for invalid character

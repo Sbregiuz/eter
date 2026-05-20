@@ -14,6 +14,7 @@
 #include "eter/Parser/Regime.h"
 
 #include <llvm/ADT/ArrayRef.h>
+#include <llvm/ADT/DenseMapInfo.h>
 
 #include <cassert>
 #include <cstdint>
@@ -36,11 +37,21 @@ enum class NodeKind : uint16_t {
 ///
 /// Prefer `NodeIndex` over raw pointers: it is 4 bytes instead of 8, never
 /// dangling as long as the owning `NodePool` is alive, and trivially
-/// serializable.
-using NodeIndex = uint32_t;
+/// serializable. The struct wrapper makes `NodeIndex` a distinct type from
+/// `uint32_t`, preventing accidental mixing with unrelated index spaces (e.g.,
+/// `NodeData::ChildrenBegin`, which indexes into the `Children` flat array).
+struct NodeIndex {
+  static constexpr uint32_t NullValue = std::numeric_limits<uint32_t>::max();
+  uint32_t Value = NullValue;
+
+  constexpr bool isNull() const { return Value == NullValue; }
+  bool operator==(const NodeIndex &O) const { return Value == O.Value; }
+  bool operator!=(const NodeIndex &O) const { return Value != O.Value; }
+};
+static_assert(sizeof(NodeIndex) == 4, "NodeIndex must remain 4 bytes");
 
 /// Sentinel value meaning "no node" (analogous to a null pointer).
-inline constexpr NodeIndex NullNode = std::numeric_limits<uint32_t>::max();
+inline constexpr NodeIndex NullNode{};
 
 //===----------------------------------------------------------------------===//
 // NodeData — 20-byte flat node record
@@ -135,6 +146,11 @@ public:
   /// Return the number of nodes currently allocated in the pool.
   [[nodiscard]] uint32_t size() const { return Nodes.size(); }
 
+  /// Pre-allocate capacity for `nodeHint` nodes.
+  /// Call this before parsing when the expected node count is known
+  /// (e.g., from token count) to eliminate vector reallocations.
+  void reserve(size_t NodeHint);
+
   /// Encode a name + regime into a Payload word.
   /// bits [31:30] = R, bits [29:0] = Name.
   [[nodiscard]] static uint32_t makePayload(InternedStr Name, Regime R);
@@ -151,6 +167,11 @@ public:
   /// Extract the `Token::Kind` value from an operator Payload word.
   [[nodiscard]] static uint16_t payloadOp(uint32_t P);
 
+  NodePool(const NodePool &) = delete;
+  NodePool &operator=(const NodePool &) = delete;
+  NodePool(NodePool &&) = default;
+  NodePool &operator=(NodePool &&) = default;
+
 private:
   std::vector<NodeData> Nodes;     ///< all nodes; index 0 unused (sentinel)
   std::vector<NodeIndex> Children; ///< flat array of all children
@@ -158,5 +179,31 @@ private:
 };
 
 } // namespace eter::parser
+
+//===----------------------------------------------------------------------===//
+// llvm::DenseMapInfo specialization for NodeIndex
+//===----------------------------------------------------------------------===//
+//
+// Required to use NodeIndex as a key in llvm::DenseMap / llvm::DenseSet.
+// The empty and tombstone sentinels must be distinct from NullNode and from
+// every value that alloc() can produce (valid indices start at 1 and are
+// bounded by physical memory, so UINT32_MAX-1 and UINT32_MAX-2 are safe).
+
+namespace llvm {
+template <> struct DenseMapInfo<eter::parser::NodeIndex> {
+  static eter::parser::NodeIndex getEmptyKey() {
+    return eter::parser::NodeIndex{std::numeric_limits<uint32_t>::max() - 1};
+  }
+  static eter::parser::NodeIndex getTombstoneKey() {
+    return eter::parser::NodeIndex{std::numeric_limits<uint32_t>::max() - 2};
+  }
+  static unsigned getHashValue(eter::parser::NodeIndex V) {
+    return DenseMapInfo<uint32_t>::getHashValue(V.Value);
+  }
+  static bool isEqual(eter::parser::NodeIndex A, eter::parser::NodeIndex B) {
+    return A == B;
+  }
+};
+} // namespace llvm
 
 #endif // ETER_PARSER_NODEPOOL_H
