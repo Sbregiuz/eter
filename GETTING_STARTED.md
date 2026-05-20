@@ -17,8 +17,6 @@ Before building Eter, make sure the following tools are available:
 - **LLVM/MLIR 22.x**
 - **`lit`** and **`FileCheck`** for the regression test suite
 
-Eter is configured to require **C++-17** by default.
-
 ### Installing LLVM, MLIR, `lit`, and `FileCheck`
 
 Eter currently expects **LLVM/MLIR 22.x**. The setup differs slightly by
