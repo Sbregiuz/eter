@@ -72,20 +72,19 @@ inline constexpr NodeIndex NullNode = std::numeric_limits<uint32_t>::max();
 /// `NodePool::payloadRegime` instead of accessing `Payload` directly. This
 /// enforces the encoding contract and makes the calling code self-documenting.
 ///
-/// FIXME(bruzzone): We may want to remove the `Span` field from
-/// `NodeData` and instead store all `Span`s in a separate "parallel" vector.
-/// This would allow us to increase the data locality. In a 64-byte cache line,
-/// we would have 5 `NodeData` instead of 3.
+/// Source locations are intentionally absent: `Span`s live in the parallel
+/// `NodePool::Spans` vector, keeping this struct at 12 bytes (5 records per
+/// 64-byte cache line) for better locality during semantic passes that do not
+/// need source positions.
 struct NodeData {
   NodeKind Kind;          ///< 2 bytes: syntactic role
   uint16_t ChildCount;    ///< 2 bytes: number of children
   uint32_t ChildrenBegin; ///< 4 bytes: start index into NodePool::Children
   uint32_t Payload;       ///< 4 bytes: see encoding above
-  Span Span;              ///< 8 bytes: source byte range [Start, End).
-                          //  20 bytes total: 3 nodes per 64-byte cache line
+                          //  12 bytes total: 5 nodes per 64-byte cache line
 };
 
-static_assert(sizeof(NodeData) == 20, "NodeData layout changed unexpectedly");
+static_assert(sizeof(NodeData) == 12, "NodeData layout changed unexpectedly");
 
 /// Owns all AST nodes and their child relationships for a single parse result.
 ///
@@ -155,6 +154,7 @@ public:
 private:
   std::vector<NodeData> Nodes;     ///< all nodes; index 0 unused (sentinel)
   std::vector<NodeIndex> Children; ///< flat array of all children
+  std::vector<Span> Spans; ///< parallel span per node; same index as Nodes
 };
 
 } // namespace eter::parser

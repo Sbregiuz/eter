@@ -29,7 +29,8 @@ const char *nodeKindName(NodeKind K) {
 NodePool::NodePool() {
   // Index 0 is reserved as a sentinel; push a dummy record so that any
   // accidental use of index 0 is immediately visible in debug output.
-  Nodes.push_back(NodeData{NodeKind::Error, 0, 0, 0, Span{0, 0}});
+  Nodes.push_back(NodeData{NodeKind::Error, 0, 0, 0});
+  Spans.push_back(Span{0, 0});
 }
 
 NodeIndex NodePool::alloc(NodeKind Kind, Span S,
@@ -43,7 +44,8 @@ NodeIndex NodePool::alloc(NodeKind Kind, Span S,
 
   auto Idx = static_cast<NodeIndex>(Nodes.size());
   Nodes.push_back(NodeData{Kind, static_cast<uint16_t>(ChildNodes.size()),
-                           ChildrenBegin, Payload, S});
+                           ChildrenBegin, Payload});
+  Spans.push_back(S);
   return Idx;
 }
 
@@ -58,7 +60,10 @@ const NodeData &NodePool::operator[](NodeIndex I) const {
 
 NodeKind NodePool::kindOf(NodeIndex I) const { return (*this)[I].Kind; }
 
-Span NodePool::spanOf(NodeIndex I) const { return (*this)[I].Span; }
+Span NodePool::spanOf(NodeIndex I) const {
+  assert(I < Spans.size() && "NodeIndex out of bounds");
+  return Spans[I];
+}
 
 llvm::ArrayRef<NodeIndex> NodePool::childrenOf(NodeIndex I) const {
   const NodeData &N = (*this)[I];
