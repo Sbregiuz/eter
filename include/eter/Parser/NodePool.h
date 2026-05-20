@@ -115,7 +115,7 @@ public:
   /// Allocate a new node with the given kind, source span, children, and
   /// payload. Returns the index of the newly created node.
   [[nodiscard]] NodeIndex alloc(NodeKind Kind, Span Span,
-                                llvm::ArrayRef<NodeIndex> Kids,
+                                llvm::ArrayRef<NodeIndex> ChildNodes,
                                 uint32_t Payload = 0);
 
   /// Convenience: allocate a leaf node (no children).

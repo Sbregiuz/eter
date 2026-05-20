@@ -32,16 +32,17 @@ NodePool::NodePool() {
   Nodes.push_back(NodeData{NodeKind::Error, 0, 0, 0, Span{0, 0}});
 }
 
-NodeIndex NodePool::alloc(NodeKind Kind, Span S, llvm::ArrayRef<NodeIndex> Kids,
+NodeIndex NodePool::alloc(NodeKind Kind, Span S,
+                          llvm::ArrayRef<NodeIndex> ChildNodes,
                           uint32_t Payload) {
   ETER_DEBUG(llvm::dbgs() << "[" DEBUG_TYPE "] alloc " << nodeKindName(Kind)
-                          << " children=" << Kids.size() << "\n");
+                          << " children=" << ChildNodes.size() << "\n");
 
   auto ChildrenBegin = static_cast<uint32_t>(Children.size());
-  Children.insert(Children.end(), Kids.begin(), Kids.end());
+  Children.insert(Children.end(), ChildNodes.begin(), ChildNodes.end());
 
   auto Idx = static_cast<NodeIndex>(Nodes.size());
-  Nodes.push_back(NodeData{Kind, static_cast<uint16_t>(Kids.size()),
+  Nodes.push_back(NodeData{Kind, static_cast<uint16_t>(ChildNodes.size()),
                            ChildrenBegin, Payload, S});
   return Idx;
 }
