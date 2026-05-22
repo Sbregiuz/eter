@@ -52,6 +52,8 @@ print_usage() {
     echo "  check-eter                           Run the lit test suite."
     echo "  test                                 Run the unit tests."
     echo "  run-lit-test <folder|file>           Run the lit test suite, but parametrized for a specific folder/file."
+    echo "  run-unit-test <binary>               Run a specific unit test binary (e.g. Lexer/LexerTest)."
+    echo "  run-single-test <binary> <filter>    Run a single test case via --gtest_filter (e.g. Lexer/LexerTest LexerTest.LexIdentifier)."
     echo "  doc-doxygen                          Generate documentation using Doxygen."
     echo "  check-clang-format [COMMIT]          Run clang-format on staged changed files compared to a git commit."
     echo "  check-commit-clang-format [COMMIT]   Check if a specific commit is clang-format correct (default: HEAD)."
@@ -146,6 +148,29 @@ case $COMMAND in
         echo "[x] Running lit tests"
         INPUT_FOLDER=$1
         ${LIT_COMMAND} -a -s -v "${INPUT_FOLDER}"
+        ;;
+
+    run-unit-test)
+        if [ -z "${1:-}" ]; then
+            echo "[x] Error: Missing binary name for 'run-unit-test' command."
+            print_usage
+            exit 1
+        fi
+        TEST_BINARY=$1
+        echo "[x] Running unit test binary: ${TEST_BINARY}"
+        "${BUILD_DIR}/unittests/${TEST_BINARY}"
+        ;;
+
+    run-single-test)
+        if [ -z "${1:-}" ] || [ -z "${2:-}" ]; then
+            echo "[x] Error: Missing arguments for 'run-single-test' command."
+            print_usage
+            exit 1
+        fi
+        TEST_BINARY=$1
+        TEST_FILTER=$2
+        echo "[x] Running single test: ${TEST_FILTER} in ${TEST_BINARY}"
+        "${BUILD_DIR}/unittests/${TEST_BINARY}" --gtest_filter="${TEST_FILTER}"
         ;;
 
     check-clang-format)
