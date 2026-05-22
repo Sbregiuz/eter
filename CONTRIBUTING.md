@@ -171,6 +171,8 @@ hardcoded fallback).
 | Run lit tests | `./x check-eter` |
 | Run unit tests | `./x test` |
 | Run specific lit tests | `./x run-lit-test <path>` |
+| Run specific unit test binary | `./x run-unit-test <binary>` |
+| Run single test case | `./x run-single-test <binary> <filter>` |
 | Generate API docs | `./x doc-doxygen` |
 | Check clang-format | `./x check-clang-format HEAD` |
 | Apply clang-format | `./x clang-format HEAD` |
@@ -332,6 +334,8 @@ cmake --build build --target check-all
 
 ### Running Unit Tests
 
+Run all unit tests via CMake:
+
 ```bash
 cmake --build build --target test
 ```
@@ -340,6 +344,42 @@ Or directly via CTest from the build directory:
 
 ```bash
 cd build && ctest --output-on-failure
+```
+
+To run a specific unit test binary directly:
+
+```bash
+./build/unittests/Lexer/LexerTest
+./build/unittests/Base/EterBaseTests
+./build/unittests/Driver/EterDriverTests
+```
+
+To run a single test case within a binary, use `--gtest_filter`:
+
+```bash
+./build/unittests/Lexer/LexerTest --gtest_filter=LexerTest.LexIdentifier
+```
+
+List all available tests in a binary:
+
+```bash
+./build/unittests/Lexer/LexerTest --gtest_list_tests
+```
+
+Filter by CTest test name:
+
+```bash
+cd build && ctest -R LexerTest --output-on-failure
+```
+
+With the `x` script:
+
+```bash
+# Run a specific unit test binary
+./x run-unit-test Lexer/LexerTest
+
+# Run a single test case
+./x run-single-test Lexer/LexerTest LexerTest.LexIdentifier
 ```
 
 ### Running Lit (Integration) Tests
